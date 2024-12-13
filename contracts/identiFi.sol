@@ -15,6 +15,7 @@ contract identiFi {
         string phoneNumber;
         string jobTitle;
         string x;
+        string tiktok;
         string instagram;
         string youtube;
         string linkedin;
@@ -43,9 +44,30 @@ contract identiFi {
     }
 
     struct socialLinks {
+        string x;
+        string tiktok;
         string instagram;
         string youtube;
         string linkedin;
+    }
+
+    struct professionalInfo {
+        string workHistory;
+        string education;
+        string jobTitle;
         string info;
+        string[] skills;
+        string imageUrl;
+    }
+
+    // state variables
+    mapping(string => User) private users;
+    mapping(address => string) private addressToUserName;
+    mapping(string => bool) private userName;
+
+    // modifiers
+    modifier onlyUniqueUsername(string memory username) {
+        require(!userName[username], "Username already exists");
+        _;
     }
 }
