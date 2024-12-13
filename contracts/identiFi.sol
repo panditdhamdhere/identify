@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.0;
 
-contract identiFi {
-    // struct
+contract IdentiFi {
+    // structs
     struct User {
         string firstName;
         string lastName;
-        string userName;
+        string username;
         string email;
         string homeAddress;
         string dateOfBirth;
@@ -15,15 +15,15 @@ contract identiFi {
         string phoneNumber;
         string jobTitle;
         string x;
-        string tiktok;
         string instagram;
+        string tiktok;
         string youtube;
         string linkedin;
         string info;
         string[] skills;
-        string imageUrl;
-        bool exist;
-        uint256 appliedJobs;
+        string imageURL;
+        bool exists;
+        uint[] appliedJobs;
         Visibility visibility;
     }
 
@@ -34,40 +34,194 @@ contract identiFi {
         bool homeAddress;
         bool dateOfBirth;
     }
-    struct basicInfo {
+
+    struct BasicInfo {
         string firstName;
         string lastName;
-        string userName;
         string email;
         string homeAddress;
+        string dateOfBirth;
         string phoneNumber;
     }
 
-    struct socialLinks {
+    struct SocialLinks {
         string x;
-        string tiktok;
         string instagram;
+        string tiktok;
         string youtube;
         string linkedin;
     }
 
-    struct professionalInfo {
-        string workHistory;
+    struct ProfessionalInfo {
         string education;
+        string workHistory;
         string jobTitle;
         string info;
         string[] skills;
-        string imageUrl;
+        string imageURL;
     }
 
-    // state variables
+    ////////////////////////////////////////////////////
+    //////////////// State variables ///////////////////
+    ////////////////////////////////////////////////////
     mapping(string => User) private users;
-    mapping(address => string) private addressToUserName;
-    mapping(string => bool) private userName;
+    mapping(address => string) private addressToUsername;
+    mapping(string => bool) private usernames; // To check uniqueness of username
 
-    // modifiers
     modifier onlyUniqueUsername(string memory username) {
-        require(!userName[username], "Username already exists");
+        require(!usernames[username], "Username already exists.");
         _;
+    }
+
+    ////////////////////////////////////////////////
+    //////////////// FUNCTIONS /////////////////////
+    ////////////////////////////////////////////////
+
+    function createUser(
+        string memory username,
+        BasicInfo memory basicInfo,
+        ProfessionalInfo memory professionalInfo,
+        SocialLinks memory socialLinks,
+        Visibility memory visibility
+    ) public onlyUniqueUsername(username) {
+        User storage user = users[username];
+        user.firstName = basicInfo.firstName;
+        user.lastName = basicInfo.lastName;
+        user.username = username;
+        user.email = basicInfo.email;
+        user.homeAddress = basicInfo.homeAddress;
+        user.dateOfBirth = basicInfo.dateOfBirth;
+        user.phoneNumber = basicInfo.phoneNumber;
+        user.education = professionalInfo.education;
+        user.workHistory = professionalInfo.workHistory;
+        user.jobTitle = professionalInfo.jobTitle;
+        user.x = socialLinks.x;
+        user.instagram = socialLinks.instagram;
+        user.tiktok = socialLinks.tiktok;
+        user.youtube = socialLinks.youtube;
+        user.linkedin = socialLinks.linkedin;
+        user.info = professionalInfo.info;
+        user.skills = professionalInfo.skills;
+        user.imageURL = professionalInfo.imageURL;
+        user.exists = true;
+        user.visibility = visibility;
+        usernames[username] = true;
+        addressToUsername[msg.sender] = username;
+    }
+
+    function editUser(
+        string memory username,
+        BasicInfo memory basicInfo,
+        ProfessionalInfo memory professionalInfo,
+        SocialLinks memory socialLinks,
+        Visibility memory visibility
+    ) public {
+        require(users[username].exists, "User does not exist.");
+        User storage user = users[username];
+        user.firstName = basicInfo.firstName;
+        user.lastName = basicInfo.lastName;
+        user.email = basicInfo.email;
+        user.homeAddress = basicInfo.homeAddress;
+        user.dateOfBirth = basicInfo.dateOfBirth;
+        user.phoneNumber = basicInfo.phoneNumber;
+        user.education = professionalInfo.education;
+        user.workHistory = professionalInfo.workHistory;
+        user.jobTitle = professionalInfo.jobTitle;
+        user.x = socialLinks.x;
+        user.instagram = socialLinks.instagram;
+        user.tiktok = socialLinks.tiktok;
+        user.youtube = socialLinks.youtube;
+        user.linkedin = socialLinks.linkedin;
+        user.info = professionalInfo.info;
+        user.skills = professionalInfo.skills;
+        user.imageURL = professionalInfo.imageURL;
+        user.visibility = visibility;
+    }
+
+    function getUserByUsername(
+        string memory username
+    )
+        public
+        view
+        returns (
+            BasicInfo memory basicInfo,
+            ProfessionalInfo memory professionalInfo,
+            SocialLinks memory socialLinks,
+            Visibility memory visibility
+        )
+    {
+        require(users[username].exists, "User does not exist.");
+        User storage user = users[username];
+        basicInfo = BasicInfo(
+            user.firstName,
+            user.lastName,
+            user.email,
+            user.homeAddress,
+            user.dateOfBirth,
+            user.phoneNumber
+        );
+        professionalInfo = ProfessionalInfo(
+            user.education,
+            user.workHistory,
+            user.jobTitle,
+            user.info,
+            user.skills,
+            user.imageURL
+        );
+        socialLinks = SocialLinks(
+            user.x,
+            user.instagram,
+            user.tiktok,
+            user.youtube,
+            user.linkedin
+        );
+        visibility = user.visibility;
+        return (basicInfo, professionalInfo, socialLinks, visibility);
+    }
+
+    function getUserByAddress(
+        address userAddress
+    )
+        public
+        view
+        returns (
+            BasicInfo memory basicInfo,
+            ProfessionalInfo memory professionalInfo,
+            SocialLinks memory socialLinks,
+            Visibility memory visibility
+        )
+    {
+        string memory username = addressToUsername[userAddress];
+        return getUserByUsername(username);
+    }
+
+    function getUsernameByAddress(
+        address userAddress
+    ) public view returns (string memory) {
+        return addressToUsername[userAddress];
+    }
+
+    function setVisibility(
+        string memory username,
+        bool education,
+        bool workHistory,
+        bool phoneNumber,
+        bool homeAddress,
+        bool dateOfBirth
+    ) public {
+        require(users[username].exists, "User does not exist.");
+        User storage user = users[username];
+        user.visibility.education = education;
+        user.visibility.workHistory = workHistory;
+        user.visibility.phoneNumber = phoneNumber;
+        user.visibility.homeAddress = homeAddress;
+        user.visibility.dateOfBirth = dateOfBirth;
+    }
+
+    function getVisibility(
+        string memory username
+    ) public view returns (Visibility memory) {
+        require(users[username].exists, "User does not exist.");
+        return users[username].visibility;
     }
 }
